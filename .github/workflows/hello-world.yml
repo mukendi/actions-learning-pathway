@@ -5,22 +5,36 @@ jobs:
     runs-on: ubuntu-latest
     steps: 
       - name: checkout repo
-        uses: actions/checkout@v3
-      - name: use node.js
-        uses: actions/setup-node@v3
+        uses: actions/checkout@v4
+      - name: Setup Node
+        id: detect-package-manager
+        uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '20'
+          cach: ${{ steps.detect-package-manager.outputs.manager }}
+      - name: Restore cache
+        uses: actions/cach@v3
+        with:
+          path: | 
+             .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+          restore-keys: |
+             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
+      - name: Install dependencies
+        run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+      - name: Build with Next.js
       - run: npm install
       - run: npm run build 
+      
   test: 
     needs: build
     runs-on: ubuntu-latest
     steps: 
       - name: checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: use node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '20'
       - run: npm install
       - run: npm test
